@@ -26,7 +26,8 @@ def main() -> None:
     app = ctk.CTk()
     app.title("Smart Process & Resource Management Agent")
     app.geometry("1300x840")
-    app.minsize(1100, 740)
+    app.minsize(900, 600)
+    app.resizable(True, True)
     app.configure(fg_color="#0A0E1A")
 
     # ── Dashboard ─────────────────────────────────────────────────────────────

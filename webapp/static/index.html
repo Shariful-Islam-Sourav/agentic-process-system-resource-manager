@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Smart Resource Monitor</title>
+  <meta name="description" content="Real-time system process and resource management dashboard"/>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>"/>
+  <link rel="stylesheet" href="/css/style.css"/>
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- ═══════════════════ HEADER ═══════════════════ -->
+  <header class="header">
+    <div class="header-left">
+      <span class="logo">⚡</span>
+      <div class="title-group">
+        <h1>Smart Process &amp; Resource Management Agent</h1>
+        <div class="subtitle" id="sysinfo">Initialising…</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="status-pill">
+        <span class="status-dot"></span>
+        <span id="status-text">CONNECTING</span>
+      </div>
+      <div class="clock" id="clock">00:00:00</div>
+    </div>
+  </header>
+
+  <!-- ═══════════════════ MAIN ═══════════════════ -->
+  <main class="main">
+
+    <!-- Row 1: Gauges + Info cards -->
+    <div class="top-row">
+
+      <!-- Gauges -->
+      <div class="gauges-wrap">
+        <div class="gauge-card">
+          <div class="gauge-svg-wrap" id="gauge-cpu"></div>
+          <div class="gauge-sub" id="gauge-cpu-sub">— MHz</div>
+        </div>
+        <div class="gauge-card">
+          <div class="gauge-svg-wrap" id="gauge-mem"></div>
+          <div class="gauge-sub" id="gauge-mem-sub">— / — GB</div>
+        </div>
+        <div class="gauge-card">
+          <div class="gauge-svg-wrap" id="gauge-disk"></div>
+          <div class="gauge-sub" id="gauge-disk-sub">— GB free</div>
+        </div>
+      </div>
+
+      <!-- Info cards -->
+      <div class="info-cards">
+
+        <!-- Health -->
+        <div class="card health-card">
+          <div class="card-title">🏥 System Health</div>
+          <div class="health-score" id="health-score">—</div>
+          <div style="font-size:11px;color:var(--text-muted)">&nbsp;/ 100</div>
+          <div class="health-label" id="health-label">INITIALISING</div>
+          <div class="health-bar-track">
+            <div class="health-bar-fill" id="health-bar-fill"></div>
+          </div>
+        </div>
+
+        <!-- Network + Memory -->
+        <div class="card net-card">
+          <div class="card-title">🌐 Network &amp; Memory</div>
+          <div class="stat-row">
+            <span class="stat-label" style="color:var(--orange)">▲ Upload</span>
+            <span class="stat-val" id="net-up">— KB/s</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label" style="color:var(--cyan)">▼ Download</span>
+            <span class="stat-val" id="net-dn">— KB/s</span>
+          </div>
+          <div class="divider"></div>
+          <div class="stat-row">
+            <span class="stat-label">💾 RAM</span>
+            <span class="stat-val" id="mem-detail">— / — GB</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">🔄 Swap</span>
+            <span class="stat-val" id="swap-val">—%</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">⚙️ Processes</span>
+            <span class="stat-val" id="proc-cnt">—</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Row 2: History chart -->
+    <div class="card chart-row">
+      <div class="chart-header">
+        <div class="card-title" style="margin:0">📈 Resource History (last 60 s)</div>
+        <div class="chart-legend">
+          <div class="legend-item">
+            <div class="legend-dot" style="background:#00D4FF"></div>CPU
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot" style="background:#7B61FF"></div>Memory
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot" style="background:#00FF88"></div>Disk
+          </div>
+        </div>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="history-chart"></canvas>
+      </div>
+    </div>
+
+    <!-- Row 3: Process table + Recommendations -->
+    <div class="bottom-row">
+
+      <!-- Process table -->
+      <div class="card process-card">
+        <div class="process-card-header">
+          <div class="card-title" style="margin:0">⚙️ Process Monitor</div>
+          <div class="process-count" id="proc-count">—</div>
+        </div>
+        <div class="table-wrap">
+          <table id="proc-table">
+            <thead>
+              <tr>
+                <th data-col="#"      style="width:36px">#</th>
+                <th data-col="pid"    style="width:62px">PID</th>
+                <th data-col="name">Process Name</th>
+                <th data-col="cpu"    style="width:68px">CPU %</th>
+                <th data-col="mem"    style="width:72px">Mem MB</th>
+                <th data-col="status" style="width:76px">Status</th>
+                <th data-col="user"   style="width:100px">User</th>
+                <th style="width:80px">Action</th>
+              </tr>
+            </thead>
+            <tbody id="proc-tbody"></tbody>
+          </table>
+        </div>
+        <div class="table-footer">
+          Click column header to sort &nbsp;•&nbsp; Click 🔴 Kill to terminate a process
+        </div>
+      </div>
+
+      <!-- Recommendations -->
+      <div class="card rec-card">
+        <div class="rec-card-header">
+          <div class="card-title" style="margin:0">🤖 Agent Recommendations</div>
+          <div id="rec-badges"></div>
+        </div>
+        <div class="rec-list" id="rec-list">
+          <div class="no-recs">Waiting for data…</div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- ═══════════════════ FOOTER ═══════════════════ -->
+  <footer class="footer">
+    <div class="footer-left" id="last-update">Waiting for first snapshot…</div>
+    <div class="footer-right">
+      <label class="auto-toggle">
+        <div class="toggle-wrap">
+          <input type="checkbox" id="auto-toggle" checked/>
+          <span class="toggle-slider"></span>
+        </div>
+        Auto Refresh
+      </label>
+      <button class="btn btn-ghost">🔄 Refresh Now</button>
+      <button class="btn btn-primary" id="btn-report">📄 Generate Report</button>
+    </div>
+  </footer>
+
+</div><!-- /.layout -->
+
+<!-- ═══════════════════ KILL MODAL ═══════════════════ -->
+<div class="modal-overlay hidden" id="kill-modal">
+  <div class="modal">
+    <div class="modal-icon">⚠️</div>
+    <h2>Terminate Process?</h2>
+    <p>
+      <strong id="modal-proc-name">Unknown</strong><br/>
+      PID: <span id="modal-proc-pid">—</span><br/><br/>
+      This will force-close the process. Unsaved data may be lost.
+    </p>
+    <div class="modal-actions">
+      <button class="btn-cancel" id="modal-cancel">Cancel</button>
+      <button class="btn-kill"   id="modal-confirm">🔴 Kill Process</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ TOASTS ═══════════════════ -->
+<div class="toast-container" id="toast-container"></div>
+
+<!-- ═══════════════════ CONNECTION BANNER ═══════════════════ -->
+<div class="conn-banner" id="conn-banner">
+  ⚠️ Connection lost — reconnecting…
+</div>
+
+<script src="/js/app.js"></script>
+</body>
+</html>

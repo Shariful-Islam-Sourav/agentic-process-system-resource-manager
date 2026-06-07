@@ -71,8 +71,8 @@ class Dashboard(ctk.CTkFrame):
 
     def _build_ui(self) -> None:
         self._build_header()
+        self._build_footer()   # must pack BEFORE body so expand=True doesn't eat it
         self._build_body()
-        self._build_footer()
 
     # ── Header ─────────────────────────────────────────────────────────────────
 
@@ -150,7 +150,15 @@ class Dashboard(ctk.CTkFrame):
     # ── Body ──────────────────────────────────────────────────────────────────
 
     def _build_body(self) -> None:
-        body = ctk.CTkFrame(self, fg_color=COLORS["bg_primary"], corner_radius=0)
+        # Scrollable body so the user can reach the process table
+        # even on smaller screens
+        body = ctk.CTkScrollableFrame(
+            self,
+            fg_color=COLORS["bg_primary"],
+            corner_radius=0,
+            scrollbar_button_color=COLORS["bg_card"],
+            scrollbar_button_hover_color=COLORS["accent_cyan"],
+        )
         body.pack(fill="both", expand=True)
         self._body = body
 
@@ -286,8 +294,10 @@ class Dashboard(ctk.CTkFrame):
     # ── Bottom row: Process table + Recommendations ───────────────────────────
 
     def _build_bottom_row(self, parent) -> None:
-        row = ctk.CTkFrame(parent, fg_color="transparent")
-        row.pack(fill="both", expand=True, padx=14, pady=(5, 0))
+        # Fixed height needed inside CTkScrollableFrame (expand=True collapses there)
+        row = ctk.CTkFrame(parent, fg_color="transparent", height=480)
+        row.pack(fill="x", padx=14, pady=(5, 10))
+        row.pack_propagate(False)
 
         # ── Process table panel ───────────────────────────────────────────────
         proc_panel = ctk.CTkFrame(row, fg_color=COLORS["bg_card"], corner_radius=14)
@@ -337,12 +347,13 @@ class Dashboard(ctk.CTkFrame):
         self._rec_panel = RecommendationPanel(rec_panel, on_kill=self._on_kill)
         self._rec_panel.pack(fill="both", expand=True, padx=8, pady=8)
 
+
     # ── Footer ─────────────────────────────────────────────────────────────────
 
     def _build_footer(self) -> None:
         footer = ctk.CTkFrame(self, fg_color=COLORS["bg_secondary"],
                               corner_radius=0, height=46)
-        footer.pack(fill="x", pady=(5, 0))
+        footer.pack(fill="x", side="bottom")   # side=bottom keeps it always visible
         footer.pack_propagate(False)
 
         # Left: last update

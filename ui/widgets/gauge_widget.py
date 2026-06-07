@@ -136,32 +136,28 @@ class GaugeWidget(ctk.CTkFrame):
                 style=tk.ARC, outline=color, width=9,
             )
 
-        # ── Centre decoration ─────────────────────────────────────────────────
-        dot_r = 5
-        dot_c = color if value > 0.3 else "#1E2A3A"
-        c.create_oval(
-            cx - dot_r, cy - dot_r, cx + dot_r, cy + dot_r,
-            fill=dot_c, outline="",
-        )
-
-        # ── Value text ────────────────────────────────────────────────────────
+        # ── Value text (large number, centred) ────────────────────────────────
+        # Positioned slightly above centre so unit text fits below without overlap
         c.create_text(
-            cx, cy - 8,
+            cx, cy - 10,
             text=f"{value:.1f}",
             font=("Segoe UI", 19, "bold"),
             fill="#E8EAF0",
         )
+
+        # ── Unit label (%, below the number) ─────────────────────────────────
         c.create_text(
-            cx, cy + 13,
+            cx, cy + 16,
             text=self._unit,
-            font=("Segoe UI", 9),
+            font=("Segoe UI", 10),
             fill=color if value > 0.3 else "#8892A4",
         )
 
-        # ── Arc label (bottom) ────────────────────────────────────────────────
+        # ── Metric name at the very bottom of the canvas ──────────────────────
         c.create_text(
-            cx, s - 8,
+            cx, s - 6,
             text=self._label_text,
             font=("Segoe UI", 9, "bold"),
             fill="#8892A4",
         )
+

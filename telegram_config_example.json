@@ -1,0 +1,10 @@
+{
+  "bot_token": "YOUR BOT TOKEN HERE",
+  "chat_id": "YOUR CHAT ID HERE",
+  "alert_cpu_threshold": 85,
+  "alert_mem_threshold": 85,
+  "alert_disk_threshold": 90,
+  "alert_health_threshold": 40,
+  "alert_interval_seconds": 30,
+  "alert_cooldown_seconds": 300
+}

@@ -1,1 +1,24 @@
-reports
+# Generated reports
+reports/
+
+# Telegram bot config (contains secret token — never commit this!)
+telegram_config.json
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+.Python
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db

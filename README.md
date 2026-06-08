@@ -6,11 +6,12 @@
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.136-009688?style=for-the-badge&logo=fastapi&logoColor=white)
 ![CustomTkinter](https://img.shields.io/badge/CustomTkinter-5.2-1E90FF?style=for-the-badge)
 ![psutil](https://img.shields.io/badge/psutil-7.2-orange?style=for-the-badge)
+![Telegram](https://img.shields.io/badge/Telegram-Bot-26A5E4?style=for-the-badge&logo=telegram&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
 
-**A real-time system resource monitoring and process management agent — available as both a desktop app and a browser-based web dashboard.**
+**A real-time system resource monitoring and process management agent — available as a desktop app, a browser-based web dashboard, and a Telegram bot for remote control.**
 
-[Features](#-features) • [Desktop App](#-desktop-app) • [Web App](#-web-app) • [Installation](#-installation) • [Usage](#-usage) • [Architecture](#-architecture) • [Project Structure](#-project-structure)
+[Features](#-features) • [Desktop App](#-desktop-app) • [Web App](#-web-app) • [Telegram Bot](#-telegram-bot) • [Installation](#-installation) • [Usage](#-usage) • [Architecture](#-architecture) • [Project Structure](#-project-structure)
 
 </div>
 
@@ -22,11 +23,12 @@ Modern computer users often experience slow performance due to excessive CPU, me
 
 The **Smart Process & Resource Management Agent** continuously monitors your system's resources, analyzes usage patterns, identifies bottlenecks, and provides intelligent recommendations. It also lets you **terminate problematic processes** directly from the dashboard.
 
-It comes in **two modes**:
+It comes in **three modes**:
 | Mode | Description |
 |---|---|
 | 🖥️ **Desktop App** | Native dark-themed GUI built with CustomTkinter |
 | 🌐 **Web App** | Browser dashboard powered by FastAPI + WebSocket |
+| 📱 **Telegram Bot** | Remote control from anywhere via Telegram messenger |
 
 ---
 
@@ -38,9 +40,11 @@ It comes in **two modes**:
 - 🌐 **Network & Memory Stats** — Upload/Download speed, RAM usage, Swap, and Process count
 - ⚙️ **Process Monitor** — Sortable table of all running processes with colour-coded severity
 - 🤖 **Agent Recommendations** — Rule-based engine that detects issues and suggests actions
-- 🔴 **Kill Process** — Terminate any process with a confirmation dialog (desktop & web)
+- 🔴 **Kill Process** — Terminate any process with a confirmation dialog (all three modes)
 - 📄 **Report Generation** — Save timestamped `.txt` and `.json` reports to disk
 - 🔄 **Auto Refresh** — Configurable 2-second polling with toggle control
+- 📱 **Telegram Bot** — Remote monitoring and control from your phone via Telegram
+- 🔔 **Proactive Alerts** — Automatic Telegram push notifications when thresholds are breached
 
 ---
 
@@ -83,6 +87,57 @@ Then open **http://localhost:8000** in your browser.
 
 ---
 
+## 📱 Telegram Bot
+
+Control and monitor your system remotely from anywhere using a Telegram bot.
+
+### Bot Commands
+| Command | Description |
+|---|---|
+| `/start` | Welcome message + command list |
+| `/status` | Live CPU / Memory / Disk / Network snapshot |
+| `/health` | Health score + active recommendations |
+| `/processes` | Top 10 processes ranked by CPU usage |
+| `/kill <pid>` | Terminate a process (inline confirm/cancel buttons) |
+| `/report` | Generate a report and receive it as a file in chat |
+| `/alerts` | Toggle automatic push alerts on/off |
+
+### Proactive Alerts
+The bot sends you automatic Telegram messages (no action required) when:
+- 🔴 CPU usage ≥ 85%
+- 🟣 Memory usage ≥ 85%
+- 💾 Disk usage ≥ 90%
+- 🔴 Health Score ≤ 40
+
+A 5-minute cooldown prevents repeated spam alerts.
+
+### Setup
+1. Open Telegram → message **@BotFather** → `/newbot` → copy your **Bot Token**
+2. Start a chat with your new bot, then visit:
+   ```
+   https://api.telegram.org/bot<YOUR_TOKEN>/getUpdates
+   ```
+   Or just message **@userinfobot** to get your **Chat ID** instantly.
+3. Copy the config template:
+   ```bash
+   copy telegram_config.example.json telegram_config.json
+   ```
+4. Fill in `telegram_config.json`:
+   ```json
+   {
+     "bot_token": "YOUR_BOT_TOKEN",
+     "chat_id": "YOUR_CHAT_ID"
+   }
+   ```
+5. Run the bot:
+   ```bash
+   py telegram_bot.py
+   ```
+
+> ⚠️ `telegram_config.json` is in `.gitignore` — your token will never be pushed to GitHub.
+
+---
+
 ## ⚙️ Installation
 
 ### Prerequisites
@@ -107,6 +162,11 @@ py -m pip install customtkinter psutil
 py -m pip install fastapi "uvicorn[standard]" psutil
 ```
 
+**For the Telegram Bot:**
+```bash
+py -m pip install "python-telegram-bot[job-queue]"
+```
+
 **Or install everything at once:**
 ```bash
 py -m pip install -r requirements.txt
@@ -124,7 +184,13 @@ py main.py
 ### Web App
 ```bash
 py webapp/server.py
-# Open http://localhost:8000
+# Opens http://localhost:8000 automatically
+```
+
+### Telegram Bot
+```bash
+# Complete setup (see Telegram Bot section) then:
+py telegram_bot.py
 ```
 
 ### Generating a Report
@@ -147,33 +213,32 @@ reports/
 ## 🏗️ Architecture
 
 ```
-┌──────────────────────────────────────────────────────────┐
-│                    User Interface                         │
-│  ┌──────────────────────┐   ┌──────────────────────────┐ │
-│  │  Desktop App         │   │  Web App (Browser)        │ │
-│  │  (CustomTkinter)     │   │  HTML + CSS + JS          │ │
-│  └──────────┬───────────┘   └────────────┬─────────────┘ │
-└─────────────┼──────────────────────────── ┼──────────────┘
-              │  direct call                 │  WebSocket / REST
-┌─────────────▼──────────────────────────── ▼──────────────┐
-│                    Backend (Python)                        │
-│                                                           │
-│  ┌──────────────┐  ┌───────────────┐  ┌───────────────┐  │
-│  │ System       │  │ Process       │  │ Decision      │  │
-│  │ Monitor      │  │ Analyzer      │  │ Engine        │  │
-│  │ (psutil)     │  │ (ranking)     │  │ (rules)       │  │
-│  └──────┬───────┘  └───────┬───────┘  └──────┬────────┘  │
-│         └──────────────────┼──────────────────┘           │
-│                            ▼                               │
-│                   ┌────────────────┐                      │
-│                   │ Report         │                      │
-│                   │ Generator      │                      │
-│                   │ (.txt + .json) │                      │
-│                   └────────────────┘                      │
-└───────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│                        User Interface                            │
+│  ┌──────────────┐   ┌────────────────────┐   ┌───────────────┐  │
+│  │  Desktop App │   │  Web App (Browser) │   │ Telegram Bot  │  │
+│  │ CustomTkinter│   │  HTML + CSS + JS   │   │  (Phone)      │  │
+│  └──────┬───────┘   └─────────┬──────────┘   └──────┬────────┘  │
+└─────────┼─────────────────────┼────────────────────  ┼──────────┘
+          │ direct call         │ WebSocket/REST        │ Polling
+┌─────────▼─────────────────────▼──────────────────────▼──────────┐
+│                        Backend (Python)                           │
+│                                                                   │
+│  ┌──────────────┐  ┌────────────────┐  ┌─────────────────────┐   │
+│  │ System       │  │ Process        │  │ Decision Engine     │   │
+│  │ Monitor      │  │ Analyzer       │  │ (rules + health)    │   │
+│  │ (psutil)     │  │ (CPU/mem rank) │  │                     │   │
+│  └──────┬───────┘  └───────┬────────┘  └──────────┬──────────┘   │
+│         └──────────────────┼─────────────────────  ┘             │
+│                            ▼                                      │
+│                   ┌─────────────────┐                            │
+│                   │ Report Generator│                            │
+│                   │ (.txt + .json)  │                            │
+│                   └─────────────────┘                            │
+└───────────────────────────────────────────────────────────────────┘
               │
               ▼
-     Local Machine  (psutil reads YOUR system data)
+     Local Machine  (psutil reads YOUR system's live data)
 ```
 
 ### Data Flow
@@ -190,15 +255,19 @@ reports/
 ```
 agentic-process-system-resource-manager/
 │
-├── main.py                          # Desktop app entry point
+├── main.py                          # 🖥️  Desktop app entry point
+├── telegram_bot.py                  # 📱  Telegram bot entry point
 ├── requirements.txt                 # Python dependencies
+├── telegram_config.json             # ⚠️  Secret — in .gitignore
+├── telegram_config.example.json     # Config template (safe to commit)
+├── .gitignore
 │
-├── modules/                         # Core backend logic
+├── modules/                         # Core backend logic (shared by all modes)
 │   ├── __init__.py
 │   ├── system_monitor.py            # Phase 1: Data collection (psutil)
 │   ├── process_analyzer.py          # Phase 2: Process ranking
 │   ├── decision_engine.py           # Phase 3: Rules + health score
-│   └── report_generator.py          # Phase 5: .txt / .json reports
+│   └── report_generator.py          # Phase 4: .txt / .json reports
 │
 ├── ui/                              # Desktop UI (CustomTkinter)
 │   ├── __init__.py
@@ -218,7 +287,7 @@ agentic-process-system-resource-manager/
 │       ├── css/
 │       │   └── style.css            # Dark glassmorphism theme
 │       └── js/
-│           └── app.js               # Gauges, chart, table, WS client
+│           └── app.js               # SVG gauges, Chart.js, WS client
 │
 └── reports/                         # Generated reports (auto-created)
     ├── report_*.txt
@@ -276,6 +345,8 @@ Writes two files per report:
 | Web gauges | SVG + JavaScript animation |
 | Web styling | Vanilla CSS (glassmorphism dark theme) |
 | Fonts | Google Fonts — Inter, JetBrains Mono |
+| Telegram bot | `python-telegram-bot` v22 (async) |
+| Bot scheduling | `APScheduler` (proactive alerts) |
 
 ---
 
@@ -302,10 +373,16 @@ Writes two files per report:
 ## 📋 Requirements
 
 ```
+# Desktop App
 customtkinter>=5.2.0
 psutil>=7.0.0
+
+# Web App
 fastapi>=0.100.0
 uvicorn[standard]>=0.20.0
+
+# Telegram Bot
+python-telegram-bot[job-queue]>=22.0
 ```
 
 ---
